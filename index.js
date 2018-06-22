@@ -50,7 +50,7 @@ influx.getDatabaseNames()
           measurement: 'tick',
           tags: { exchange: 'btcmarkets', instrument: data.instrument, currency: data.currency },
           fields: { bid: data.bestBid, ask: data.bestAsk, price: data.lastPrice, volume: data.volume24h },
-          timestamp: data.timestamp
+          timestamp: data.timestamp * 1000
         }
       ])
       .then(res => { console.log(`timestamp=${data.timestamp},instrument=${data.instrument},currency=${data.currency},bid=${data.bestBid},ask=${data.bestAsk},price=${data.lastPrice},volume=${data.volume24h}`) })
