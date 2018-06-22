@@ -50,9 +50,12 @@ influx.getDatabaseNames()
           measurement: 'tick',
           tags: { exchange: 'btcmarkets', instrument: data.instrument, currency: data.currency },
           fields: { bid: data.bestBid, ask: data.bestAsk, price: data.lastPrice, volume: data.volume24h },
-          timestamp: data.timestamp * 1000
+          timestamp: data.timestamp
         }
-      ])
+      ], 
+      {
+        precision: 'ms'
+      })
       .then(res => { console.log(`timestamp=${data.timestamp},instrument=${data.instrument},currency=${data.currency},bid=${data.bestBid},ask=${data.bestAsk},price=${data.lastPrice},volume=${data.volume24h}`) })
       .catch(err => { console.error(`Error saving data to InfluxDB! ${err.message}`) })
     });
