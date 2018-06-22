@@ -1,9 +1,16 @@
 const Socket = require('socket.io-client')
 const InfluxDB = require('influx')
 
+const api = "https://socket.btcmarkets.net"
 const pairs = process.env.PAIRS || 'XRP-AUD,BTC-AUD,BCH-AUD,ETC-AUD,ETH-AUD,LTC-AUD,LTC-BTC,ETC-BTC,BCH-BTC,ETH-BTC,XRP-BTC'
 const dbhost = process.env.DBHOST || 'localhost:8086'
 const dbname = 'ticks' || process.env.DBNAME
+
+console.log('BTC MARKETS DATA INGRESS\n')
+console.log(`API:    ${api}`)
+console.log(`PAIRS:  ${pairs}`)
+console.log(`DBHOST: ${dbhost}`)
+console.log(`DBNAME: ${dbname}\n\n`)
 
 const influx = new InfluxDB.InfluxDB({
   host: dbhost,
@@ -27,10 +34,10 @@ influx.getDatabaseNames()
     }
   }).then(() => {
 
-    const socket = Socket('https://socket.btcmarkets.net', {secure: true, transports: ['websocket'], upgrade: false})
+    const socket = Socket(api, {secure: true, transports: ['websocket'], upgrade: false})
     
     socket.on('connect', function() {
-      console.log('Connected to BTCMarkets...')
+      console.log('CONNECTED!\n')
       pairs.split(",").forEach(element => {
         let channel = `Ticker-BTCMarkets-${element}`
         socket.emit('join', `${channel}`)
@@ -51,7 +58,7 @@ influx.getDatabaseNames()
     });
     
     socket.on('disconnect', function() {
-      console.error('Disconnected from BTCMarkets...')
+      console.error('DISCONNECTED!')
     });
 
   })
