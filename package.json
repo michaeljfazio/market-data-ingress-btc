@@ -1,7 +1,7 @@
 {
   "name": "market-data-ingress-btc",
   "version": "1.0.0",
-  "description": "",
+  "description": "Ingress live market data from BTC Markets exchange into InfluxDB",
   "main": "index.js",
   "scripts": {
     "start": "node ./index.js",
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/michaeljfazio/market-data-ingress-btc.git"
   },
   "author": "Michael Fazio <michaelfazio@me.com>",
-  "license": "ISC",
+  "license": "GPL",
   "bugs": {
     "url": "https://github.com/michaeljfazio/market-data-ingress-btc/issues"
   },
