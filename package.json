@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/michaeljfazio/market-data-ingress-btc#readme",
   "dependencies": {
+    "influx": "^5.0.7",
     "socket.io-client": "^2.1.1"
   }
 }

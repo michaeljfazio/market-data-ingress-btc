@@ -1,22 +1,57 @@
-const socket = require('socket.io-client')('https://socket.btcmarkets.net', {secure: true, transports: ['websocket'], upgrade: false})
+const Socket = require('socket.io-client')
+const InfluxDB = require('influx')
 
 const pairs = process.env.PAIRS || 'XRP-AUD,BTC-AUD,BCH-AUD,ETC-AUD,ETH-AUD,LTC-AUD,LTC-BTC,ETC-BTC,BCH-BTC,ETH-BTC,XRP-BTC'
-const dbhost = process.env.DBHOST || 'marketdatadb'
-const dbport = '8086'
-const dbname = 'ticks'
+const dbhost = process.env.DBHOST || 'localhost:8086'
+const dbname = 'ticks' || process.env.DBNAME
 
-socket.on('connect', function() {
-  pairs.split(",").forEach(element => {
-    let channel = `Ticker-BTCMarkets-${element}`
-    console.log(`Joining channel ${channel}`)
-    socket.emit('join', `${channel}`)
-  });
-});
+const influx = new InfluxDB.InfluxDB({
+  host: dbhost,
+  database: dbname,
+  schema: [{
+    measurement: 'tick',
+    fields: {
+      bid: InfluxDB.FieldType.INTEGER,
+      ask: InfluxDB.FieldType.INTEGER,
+      price: InfluxDB.FieldType.INTEGER,
+      volume: InfluxDB.FieldType.INTEGER
+    },
+    tags: ['exchange', 'instrument', 'currency']
+  }]
+})
 
-socket.on('newTicker', function(data) {
-  console.log(`tick,exchange=btcmarkets,instrument=${data.instrument},currency=${data.currency} bid=${data.bestBid},ask=${data.bestAsk},price=${data.lastPrice} ${data.timestamp}`)
-});
+influx.getDatabaseNames()
+  .then(names => {
+    if (!names.includes(dbname)) {
+      return influx.createDatabase(dbname)
+    }
+  }).then(() => {
 
-socket.on('disconnect', function() {
-  console.log(`Disconnected from BTC Markets...`)
-});
+    const socket = Socket('https://socket.btcmarkets.net', {secure: true, transports: ['websocket'], upgrade: false})
+    
+    socket.on('connect', function() {
+      console.log('Connected to BTCMarkets...')
+      pairs.split(",").forEach(element => {
+        let channel = `Ticker-BTCMarkets-${element}`
+        socket.emit('join', `${channel}`)
+      });
+    });
+    
+    socket.on('newTicker', function(data) {
+      influx.writePoints([
+        {
+          measurement: 'tick',
+          tags: { exchange: 'btcmarkets', instrument: data.instrument, currency: data.currency },
+          fields: { bid: data.bestBid, ask: data.bestAsk, price: data.lastPrice, volume: data.volume24h },
+          timestamp: data.timestamp
+        }
+      ])
+      .then(res => { console.log(`timestamp=${data.timestamp},instrument=${data.instrument},currency=${data.currency},bid=${data.bestBid},ask=${data.bestAsk},price=${data.lastPrice},volume=${data.volume24h}`) })
+      .catch(err => { console.error(`Error saving data to InfluxDB! ${err.message}`) })
+    });
+    
+    socket.on('disconnect', function() {
+      console.error('Disconnected from BTCMarkets...')
+    });
+
+  })
